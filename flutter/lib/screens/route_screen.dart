@@ -27,7 +27,8 @@ class RouteScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge),
               title: Text('${e.street} ${e.number}'),
               subtitle: Text(e.entranceName),
-              trailing: StatusChip(status: e.surveyStatus),
+              // Exercise 3 — the same tag on the entrance screen: Flutter flies it.
+              trailing: Hero(tag: 'status-${e.id}', child: StatusChip(status: e.surveyStatus)),
               onTap: () => context.push('/entrances/${e.id}'),
             ),
           );

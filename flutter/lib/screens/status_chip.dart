@@ -24,7 +24,11 @@ class StatusChip extends StatelessWidget {
   final SurveyStatus status;
 
   @override
-  Widget build(BuildContext context) => Container(
+  // Material: during a Hero flight the chip has no Material above it, and
+  // its text would show the yellow "missing Material" underline.
+  Widget build(BuildContext context) => Material(
+        type: MaterialType.transparency,
+        child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: statusColor[status],
@@ -34,5 +38,6 @@ class StatusChip extends StatelessWidget {
           statusLabel[status]!,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
+      ),
       );
 }

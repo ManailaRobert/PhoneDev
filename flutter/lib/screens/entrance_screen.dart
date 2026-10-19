@@ -19,6 +19,11 @@ class EntranceScreen extends StatelessWidget {
       return Scaffold(appBar: AppBar(), body: const Center(child: Text('No such entrance.')));
     }
     final building = store.fixtures.buildings.firstWhere((b) => b.id == e.buildingId);
+    final f = store.fixtures;
+    final myRoute = f.routes.firstWhere((r) => r.workerId == f.me);
+    final stops = f.stops.where((s) => s.routeId == myRoute.id).toList();
+    final here = stops.where((s) => s.entranceId == e.id).firstOrNull;
+    final next = stops.where((s) => here != null && s.order == here.order + 1).firstOrNull;
     final rows = {
       'Pin confirmed': e.coordsConfirmed,
       'Address checked': e.addressConfirmed,
@@ -38,7 +43,10 @@ class EntranceScreen extends StatelessWidget {
           Text('${e.street} ${e.number}', style: text.headlineSmall),
           Text('${e.entranceName} · ${building.label}'),
           const SizedBox(height: 8),
-          Align(alignment: Alignment.centerLeft, child: StatusChip(status: e.surveyStatus)),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Hero(tag: 'status-${e.id}', child: StatusChip(status: e.surveyStatus)),
+          ),
           const SizedBox(height: 8),
           Text('Office pin: ${e.lat.toStringAsFixed(5)}, ${e.lng.toStringAsFixed(5)}'),
           if (building.comment != null) Text('Office note: ${building.comment}'),
@@ -55,6 +63,24 @@ class EntranceScreen extends StatelessWidget {
             onPressed: () => context.push('/entrances/${e.id}/survey'),
             child: const Text('Survey'),
           ),
+          // Exercise 5 — push adds a screen (Back returns here); go replaces
+          // the whole stack with the new location (Back has nowhere to go).
+          if (next != null)
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => context.push('/entrances/${next.entranceId}'),
+                  child: const Text('Next stop (push)'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => context.go('/entrances/${next.entranceId}'),
+                  child: const Text('Next stop (go)'),
+                ),
+              ),
+            ]),
         ],
       ),
     );

@@ -12,8 +12,15 @@ import 'status_chip.dart';
 const tiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const bucharest = LatLng(44.4355, 26.1025);
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  String? _selected; // Exercise 4: the first tap selects, the second opens
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +49,24 @@ class MapScreen extends StatelessWidget {
                       button: true,
                       label: '${e.street} ${e.number}, ${e.entranceName}',
                       child: GestureDetector(
-                        onTap: () => context.push('/entrances/${e.id}'),
-                        child: Icon(Icons.location_on,
-                            size: 40, color: statusColor[e.surveyStatus]),
+                        onTap: () => _selected == e.id
+                            ? context.push('/entrances/${e.id}')
+                            : setState(() => _selected = e.id),
+                        // Exercise 4 — an implicit animation: change the size,
+                        // AnimatedContainer tweens to it.
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
+                            width: _selected == e.id ? 34 : 22,
+                            height: _selected == e.id ? 34 : 22,
+                            decoration: BoxDecoration(
+                              color: statusColor[e.surveyStatus],
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

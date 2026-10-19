@@ -7,6 +7,7 @@ import 'screens/map_screen.dart';
 import 'screens/route_screen.dart';
 import 'screens/survey_screen.dart';
 import 'store.dart';
+import 'screens/user_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +19,10 @@ final _router = GoRouter(
   initialLocation: '/map',
   routes: [
     // The three tabs: each branch keeps its own navigation stack.
+    GoRoute(
+      path: '/users/:id',
+      builder: (context, state) => UserScreen(id: state.pathParameters['id']!),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => TabsShell(shell: shell),
       branches: [
@@ -55,6 +60,7 @@ final _router = GoRouter(
         ),
       ],
     ),
+
   ],
 );
 

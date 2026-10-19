@@ -165,7 +165,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
             gap,
             _field('elevators', 'Elevators', _intRule(validateElevators), keyboard: number),
             gap,
-            _field('yearBuilt', 'Year built', _intRule(validateYearBuilt), keyboard: number),
+            // Exercise 2 — the contract's rule, then ours on top.
+            _field('yearBuilt', 'Year built', (s) {
+              final contractError = _intRule(validateYearBuilt)(s);
+              if (contractError != null) return contractError;
+              return int.parse(s!.trim()) > DateTime.now().year ? 'Not in the future' : null;
+            }, keyboard: number),
             SwitchListTile(
               title: const Text('Shops on the ground floor'),
               value: _groundFloorCommercial,

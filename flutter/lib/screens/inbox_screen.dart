@@ -72,9 +72,12 @@ class ConversationScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!mine)
-                    Text(f.users.firstWhere((u) => u.id == m.authorId).name,
-                        style: Theme.of(context).textTheme.labelSmall),
-                  Text(m.text),
+                    GestureDetector(
+                      onTap: () => context.push('/users/${m.authorId}'),
+                      child: Text(f.users.firstWhere((u) => u.id == m.authorId).name,
+                          style: Theme.of(context).textTheme.labelSmall),
+                    ),
+                    Text(m.text),
                 ],
               ),
             ),
