@@ -11,6 +11,11 @@ import 'screens/map_screen.dart';
 import 'screens/route_screen.dart';
 import 'screens/survey_screen.dart';
 import 'store.dart';
+import 'session.dart';
+
+const _tabs = ['/map', '/route', '/inbox'];
+var _startAt = _tabs.first;
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +23,7 @@ Future<void> main() async {
   // The app's truth from now on: SQLite, seeded from the fixtures once.
   final db = AppDatabase();
   await db.seedIfEmpty(fixtures.buildings, fixtures.entrances);
+  _startAt = await lastTab(); // reopen on the tab the app was closed on
   runApp(ProviderScope(
     // Hand the two things main() opened to every provider that asks for them.
     overrides: [
@@ -29,7 +35,7 @@ Future<void> main() async {
 }
 
 final _router = GoRouter(
-  initialLocation: '/map',
+  initialLocation: _startAt,
   routes: [
     // The three tabs: each branch keeps its own navigation stack.
     StatefulShellRoute.indexedStack(
@@ -106,8 +112,10 @@ class TabsShell extends ConsumerWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
         // Tapping the current tab again goes back to its first screen.
-        onDestinationSelected: (i) =>
-            shell.goBranch(i, initialLocation: i == shell.currentIndex),
+        onDestinationSelected: (i) {
+          shell.goBranch(i, initialLocation: i == shell.currentIndex);
+          saveLastTab(_tabs[i]);
+        },
         destinations: [
           const NavigationDestination(icon: Icon(Icons.map_outlined), label: 'Map'),
           const NavigationDestination(icon: Icon(Icons.list_alt), label: 'My route'),

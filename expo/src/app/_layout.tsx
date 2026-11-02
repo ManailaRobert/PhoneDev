@@ -2,8 +2,8 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Text, useColorScheme, View } from 'react-native';
-import { openDb } from '../db/db';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { openDb } from '../db/db';
 
 export default function RootLayout() {
   const scheme = useColorScheme();
