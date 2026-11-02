@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,7 +36,6 @@ class MapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final links = ref.watch(connectivityProvider).value ?? const [ConnectivityResult.other];
     final online = !links.contains(ConnectivityResult.none);
-    final token = ref.watch(tokenProvider).value;
     final entrances = ref.watch(entrancesProvider).value ?? const <Entrance>[];
     final recent = ref.watch(recentProvider); // exercise 5
     final names = {for (final e in entrances) e.id: e.entranceName};
@@ -102,8 +102,12 @@ class MapScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(token == null ? 'token …' : 'token ••••${token.substring(token.length - 4)}',
+                      Text(FirebaseAuth.instance.currentUser?.email ?? '',
                           style: Theme.of(context).textTheme.bodySmall),
+                      TextButton(
+                        onPressed: () => FirebaseAuth.instance.signOut(),
+                        child: const Text('Sign out'),
+                      ),
                     ]),
                   ]),
                 ),
