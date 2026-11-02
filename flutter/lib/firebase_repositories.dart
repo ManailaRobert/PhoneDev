@@ -1,3 +1,5 @@
+
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'contract/contract.dart';
@@ -32,8 +34,22 @@ class FirebasePinsRepository implements PinsRepository {
 }
 
 class FirebaseSurveysRepository implements SurveysRepository {
-  @override
-  Future<void> push(Map<String, Object?> survey) =>
-      // The document id is the survey's UUID: a second push overwrites it.
-      FirebaseFirestore.instance.collection('surveys').doc(survey['id']! as String).set(survey);
+    @override
+    Future<void> push(Map<String, Object?> survey) =>
+        // The document id is the survey's UUID: a second push overwrites it.
+        FirebaseFirestore.instance.collection('surveys').doc(survey['id']! as String).set(survey);
+    @override
+    Stream<CloudSurvey> watchOne(String id) => FirebaseFirestore.instance
+        .collection('surveys')
+        .doc(id)
+        .snapshots()
+        .map<CloudSurvey>((snap) => snap.exists
+            ? (state: CloudState.sent, updatedAt: snap.data()!['updatedAt'] as String?)
+            : (state: CloudState.none, updatedAt: null))
+        // permission-denied: the rules said no
+        .transform(StreamTransformer.fromHandlers(
+          handleError: (Object e, StackTrace s, EventSink<CloudSurvey> sink) =>
+              sink.add((state: CloudState.denied, updatedAt: null)),
+        ));
+
 }

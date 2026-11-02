@@ -5,6 +5,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { ME, routes } from '../../contract/fixtures';
 import { markOpened, useBuilding, useEntrance, useField } from '../../store';
 import { useColors } from '../../theme';
+import { CloudStatus } from '../../components/CloudStatus';
 import { HereCard } from '../../components/HereCard';
 import { Photos } from '../../components/Photos';
 import { useEffect } from 'react';
@@ -59,8 +60,9 @@ export default function EntranceScreen() {
       </Text>
       {/* Exercise 3 — no shared elements in Expo Go: the chip flies in instead */}
       <FlyIn>
-        <StatusChip status={entrance.surveyStatus} />
+        <StatusChip status={entrance.surveyStatus} />   
       </FlyIn>
+      <CloudStatus id={entrance.id} />
       <Text style={{ color: colors.muted }}>
         Office pin: {entrance.lat.toFixed(5)}, {entrance.lng.toFixed(5)}
       </Text>
