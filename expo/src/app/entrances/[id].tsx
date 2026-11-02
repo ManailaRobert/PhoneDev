@@ -3,10 +3,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FlyIn } from '../../components/FlyIn';
 import { StatusChip } from '../../components/StatusChip';
 import { ME, routes } from '../../contract/fixtures';
-import { useBuilding, useEntrance } from '../../store';
+import { markOpened, useBuilding, useEntrance, useField } from '../../store';
 import { useColors } from '../../theme';
 import { HereCard } from '../../components/HereCard';
 import { Photos } from '../../components/Photos';
+import { useEffect } from 'react';
+import type { Entrance } from '../../contract/contract';
+import { fromWire, toWire } from '../../wire';
 
 
 const show = (v: number | boolean | string | null) =>
@@ -16,7 +19,14 @@ export default function EntranceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const entrance = useEntrance(id);
   // From SQLite, not the fixtures: a building made on the phone is there too.
-  const building = useBuilding(entrance?.buildingId ?? '');
+  const building = useBuilding(entrance?.buildingId ?? '') ;
+  
+  useEffect(() => {
+    markOpened(id);
+    useField.getState().openRecent(id);
+  }, [id]);
+
+  
   const colors = useColors();
   if (entrance === undefined) return null;
   if (!entrance) {
@@ -77,6 +87,10 @@ export default function EntranceScreen() {
       </Pressable>
 
       <HereCard />
+            <Text style={{ color: colors.muted }}>
+        Opened on this phone: {entrance.openedAt ? new Date(entrance.openedAt).toLocaleString() : 'never'}
+        <WireJson entrance={entrance} color={colors.muted} />
+      </Text>
       <Photos entranceId={entrance.id} />
 
       {next ? (
@@ -126,3 +140,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+function WireJson({ entrance, color }: { entrance: Entrance; color: string }) {
+  const json = toWire(entrance);
+  const same = toWire(fromWire(json)) === json;
+  return (
+    <Text style={{ color, fontFamily: 'monospace', fontSize: 11 }}>
+      {same ? 'Round trip: same JSON ✓' : 'Round trip: DIFFERENT ✗'} · {json.length} characters, {Object.keys(JSON.parse(json)).length} keys
+    </Text>
+  );
+}

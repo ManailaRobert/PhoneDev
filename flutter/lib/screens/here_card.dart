@@ -18,6 +18,7 @@ class _HereCardState extends ConsumerState<HereCard> {
   @override
   Widget build(BuildContext context) {
     final fix = ref.watch(fixProvider);
+    final quality = ref.watch(fixQualityProvider); // exercise 3
     final heading = ref.watch(headingProvider).value; // watching starts the compass
     return Card(
       child: Padding(
@@ -33,6 +34,7 @@ class _HereCardState extends ConsumerState<HereCard> {
             Text(heading == null
                 ? (kIsWeb ? 'Facing: no compass on the web' : 'Facing: waiting for the compass')
                 : 'Facing: ${heading.round()}° ${compassPoint(heading)}'),
+            Text('GPS: $quality'),
             const SizedBox(height: 8),
             OutlinedButton(
               style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),

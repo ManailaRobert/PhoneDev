@@ -6,6 +6,7 @@ import '../providers.dart';
 import 'status_chip.dart';
 import 'here_card.dart';
 import 'photos_card.dart';
+import 'visit_lines.dart';
 
 String show(Object? v) => v == null ? '—' : v is bool ? (v ? 'Yes' : 'No') : '$v';
 
@@ -68,7 +69,8 @@ class EntranceScreen extends ConsumerWidget {
             child: const Text('Survey'),
           ),
           const SizedBox(height: 8),
-          const HereCard(),  
+          const HereCard(),
+          VisitLines(entrance: e),  
           PhotosCard(entranceId: e.id),        
         ],
       ),

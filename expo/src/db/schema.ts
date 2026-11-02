@@ -48,6 +48,7 @@ export const entrances = sqliteTable('entrances', {
   surveyedBy: text(),
   surveyedAt: text(),
   ...local(),
+  openedAt: text(),
 });
 
 export const photos = sqliteTable('photos', {
