@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../contract/contract.dart';
 import '../providers.dart';
 
+import 'package:flutter/services.dart' show HapticFeedback;
+import '../location.dart';
+
 class SurveyScreen extends ConsumerStatefulWidget {
   const SurveyScreen({super.key, required this.id});
 
@@ -96,6 +99,7 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
     setState(() => _ruleErrors = rules);
     if (!fieldsOk || rules.isNotEmpty) return;
     await ref.read(databaseProvider).submitSurvey(candidate, ref.read(meProvider));
+    await HapticFeedback.mediumImpact();
     if (mounted) context.pop();
   }
 
@@ -151,6 +155,18 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
               gap,
               _field('correctedLng', 'Corrected longitude', _coordRule(validateLng), keyboard: decimal),
               if (_ruleErrors['correctedLng'] != null) _ruleError('correctedLng')!,
+              const SizedBox(height: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                onPressed: () async {
+                  final fix = await locate(context, ref);
+                  if (fix == null) return;
+                  // Five decimals is about a metre: more would be false precision.
+                  _text['correctedLat']!.text = fix.lat.toStringAsFixed(5);
+                  _text['correctedLng']!.text = fix.lng.toStringAsFixed(5);
+                },
+                child: const Text('Use my position'),
+              ),              
               gap,
             ],
             _field('street', 'Street', validateStreet),

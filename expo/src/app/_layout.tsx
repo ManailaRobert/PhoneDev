@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Text, useColorScheme, View } from 'react-native';
 import { openDb } from '../db/db';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -24,14 +25,17 @@ export default function RootLayout() {
   if (state === 'opening') return null; // a few milliseconds
 
   return (
-    <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="entrances/[id]" options={{ title: 'Entrance' }} />
-        <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />
-        <Stack.Screen name="conversations/[id]" options={{ title: 'Messages' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    // keyboard-controller tracks the keyboard for every screen (the survey, step 10).
+    <KeyboardProvider>
+      <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="entrances/[id]" options={{ title: 'Entrance' }} />
+          <Stack.Screen name="survey/[id]" options={{ title: 'Survey' }} />
+          <Stack.Screen name="conversations/[id]" options={{ title: 'Messages' }} />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }

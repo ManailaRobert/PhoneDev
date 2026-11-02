@@ -1,18 +1,11 @@
 import { useForm } from '@tanstack/react-form';
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Entrance ,EntranceSurvey } from '../../contract/contract';
+import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { type Entrance, EntranceSurvey } from '../../contract/contract';
+import { locate } from '../../location';
 import { submitSurvey, useEntrance } from '../../store';
 import { type Colors, useColors } from '../../theme';
 
@@ -54,20 +47,24 @@ function SurveyForm({ id, entrance }: { id: string; entrance: Entrance }) {
     validators: { onChange: EntranceSurvey },
     onSubmit: async ({ value }) => {
       await submitSurvey(id, EntranceSurvey.parse(value));
+      // Saved: say it with the hand as well as the eyes (a no-op on the web).
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     },
   });
 
-  if (!entrance) return null;
-
   const input = [styles.input, { color: colors.text, borderColor: colors.border }];
 
   return (
-    <KeyboardAvoidingView
+    // Edge to edge, Android no longer shrinks the window for the keyboard:
+    // this ScrollView scrolls the focused field above it, on both platforms.
+    <KeyboardAwareScrollView
+      // The caret stays 80 dp above the keyboard: enough to show the whole comment box.
+      bottomOffset={80}
+      keyboardShouldPersistTaps="handled"
       style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <View style={styles.content}>
         <form.Field name="coordsConfirmed">
           {(field) => (
             <Row label="The pin is at the door" colors={colors} errors={field.state.meta.errors} touched={field.state.meta.isTouched}>
@@ -93,6 +90,21 @@ function SurveyForm({ id, entrance }: { id: string; entrance: Entrance }) {
                     </Labeled>
                   )}
                 </form.Field>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={async () => {
+                    const fix = await locate();
+                    if (!fix) return;
+                    // Five decimals is about a metre: more would be false precision.
+                    form.setFieldValue('correctedLat', Number(fix.lat.toFixed(5)));
+                    form.setFieldValue('correctedLng', Number(fix.lng.toFixed(5)));
+                  }}
+                  style={[styles.outline, { borderColor: colors.primary }]}
+                >
+                  <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                    Use my position
+                  </Text>
+                </Pressable>
               </View>
             )
           }
@@ -120,6 +132,7 @@ function SurveyForm({ id, entrance }: { id: string; entrance: Entrance }) {
             ['stories', 'Stories'],
             ['flats', 'Flats'],
             ['elevators', 'Elevators'],
+            ['yearBuilt', 'Year built'],
           ] as const
         ).map(([name, label]) => (
           <form.Field key={name} name={name}>
@@ -130,22 +143,6 @@ function SurveyForm({ id, entrance }: { id: string; entrance: Entrance }) {
             )}
           </form.Field>
         ))}
-
-        {/* Exercise 2 — a field's own validator runs next to the schema's. */}
-        <form.Field
-          name="yearBuilt"
-          validators={{
-            onChange: ({ value }) =>
-              value > new Date().getFullYear() ? 'Not in the future' : undefined,
-          }}
-        >
-          {(field) => (
-            <Labeled label="Year built" colors={colors} errors={field.state.meta.errors} touched={field.state.meta.isTouched}>
-              <TextInput style={input} keyboardType="number-pad" value={fromNumber(field.state.value)} onChangeText={(t) => field.handleChange(toNumber(t))} onBlur={field.handleBlur} />
-            </Labeled>
-          )}
-        </form.Field>
-
         <form.Field name="groundFloorCommercial">
           {(field) => (
             <Row label="Shops on the ground floor" colors={colors} errors={field.state.meta.errors} touched={field.state.meta.isTouched}>
@@ -174,10 +171,8 @@ function SurveyForm({ id, entrance }: { id: string; entrance: Entrance }) {
             </Pressable>
           )}
         </form.Subscribe>
-
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -227,5 +222,6 @@ const styles = StyleSheet.create({
   pair: { gap: 14 },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, minHeight: 48, fontSize: 16 },
   multiline: { minHeight: 96, textAlignVertical: 'top', paddingTop: 12 },
+  outline: { minHeight: 48, borderWidth: 2, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   button: { minHeight: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
 });
