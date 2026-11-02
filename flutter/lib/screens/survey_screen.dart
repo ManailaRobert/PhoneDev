@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../contract/contract.dart';
 import '../providers.dart';
+import '../sync.dart';
 
 import 'package:flutter/services.dart' show HapticFeedback;
 import '../location.dart';
@@ -138,6 +139,7 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
     setState(() => _ruleErrors = rules);
     if (!fieldsOk || rules.isNotEmpty) return;
     await ref.read(databaseProvider).submitSurvey(candidate, ref.read(meProvider));
+    pushSurveys(ref); // and send it now, if the network is there
     await _prefs.remove(_draftKey); // submitted: the draft is done
     await HapticFeedback.mediumImpact();
     if (mounted) context.pop();
