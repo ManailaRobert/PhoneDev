@@ -6,6 +6,7 @@ import { ME, buildings, routes } from '../../contract/fixtures';
 import { useEntrance } from '../../store';
 import { useColors } from '../../theme';
 import { HereCard } from '../../components/HereCard';
+import { Photos } from '../../components/Photos';
 
 const show = (v: number | boolean | string | null) =>
   v === null ? '—' : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v);
@@ -73,6 +74,7 @@ export default function EntranceScreen() {
       </Pressable>
 
       <HereCard />
+      <Photos entranceId={entrance.id} />
 
       {next ? (
         // Exercise 5 — push adds a screen (Back returns here); replace swaps
