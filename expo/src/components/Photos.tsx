@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { compassPoint } from '../location';
-import { type ExifSummary, takePhoto, usePhotos } from '../photos';
+import { type ExifSummary, pickPhoto, takePhoto, usePhotos } from '../photos';
 import { useColors } from '../theme';
+
 
 export function Photos({ entranceId }: { entranceId: string }) {
   const colors = useColors();
@@ -30,6 +31,14 @@ export function Photos({ entranceId }: { entranceId: string }) {
         >
           <Text style={{ color: colors.onPrimary, fontWeight: '700' }}>Take a photo</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          onPress={run(() => pickPhoto(entranceId))}
+          style={[styles.button, styles.outline, { borderColor: colors.primary }]}
+        >
+          <Text style={{ color: colors.primary, fontWeight: '700' }}>From the gallery</Text>
+        </Pressable>        
       </View>
       {exif ? (
         <Text style={{ color: colors.muted }}>
@@ -66,4 +75,5 @@ const styles = StyleSheet.create({
   photo: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   thumb: { width: 72, height: 72, borderRadius: 8, backgroundColor: '#00000022' },
   meta: { flex: 1, gap: 2 },
+  outline: { borderWidth: 2 },
 });
