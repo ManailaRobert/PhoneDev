@@ -8,6 +8,10 @@ import '../contract/contract.dart';
 import '../providers.dart';
 import 'status_chip.dart';
 
+import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:uuid/uuid.dart';
+import '../location.dart';
+
 // OpenStreetMap's public tiles, weeks 2–4. Week 5 swaps this one constant for
 // the course's own Bucharest tiles.
 const tiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -15,6 +19,15 @@ const bucharest = LatLng(44.4355, 26.1025);
 
 class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
+
+  Future<void> _addMissed(BuildContext context, WidgetRef ref) async {
+    final fix = await locate(context, ref);
+    if (fix == null) return;
+    final id = await ref.read(databaseProvider).addMissedEntrance(
+          fix.lat, fix.lng, const Uuid().v4(), const Uuid().v4());
+    await HapticFeedback.mediumImpact();
+    if (context.mounted) context.push('/entrances/$id/survey');
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,6 +83,16 @@ class MapScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+        ),
+        Positioned(
+          right: 16,
+          bottom: 24,
+          child: FloatingActionButton.extended(
+            tooltip: 'Add a building that is not on the map, here',
+            onPressed: () => _addMissed(context, ref),
+            icon: const Icon(Icons.add_location_alt),
+            label: const Text('Missed building'),
           ),
         ),
       ],
