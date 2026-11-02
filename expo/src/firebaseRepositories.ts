@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot, query, setDoc, where } from 'firebase/firestore';
+import { collection, doc, limit, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import type { Entrance } from './contract/contract';
 import { firestore } from './firebase';
 import type { PinsRepository, SurveyDoc, SurveysRepository } from './repositories';
@@ -37,6 +37,19 @@ export const firebaseSurveys: SurveysRepository = {
     // overwrites the same document instead of making a copy.
     await setDoc(doc(firestore, 'surveys', survey.id), survey);
   },
+
+  watchLastSent(uid, onChange, onError) {
+    // where on one field + orderBy on another: Firestore needs a composite index.
+    const last = query(
+      collection(firestore, 'surveys'),
+      where('surveyedBy', '==', uid),
+      orderBy('surveyedAt', 'desc'),
+      limit(1),
+    );
+    return onSnapshot(last, (snap) => onChange((snap.docs[0]?.data() as SurveyDoc) ?? null), onError);
+  },
+
+
   watchOne(id, onChange) {
     return onSnapshot(
       doc(firestore, 'surveys', id),
