@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../contract/contract.dart';
-import '../store.dart';
+import '../providers.dart';
 
-class InboxScreen extends StatelessWidget {
+class InboxScreen extends ConsumerWidget {
   const InboxScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final f = StoreScope.of(context).fixtures;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(fixturesProvider);
     final mine = f.conversations.where((c) => c.participantIds.contains(f.me)).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Inbox')),
@@ -39,14 +40,14 @@ class InboxScreen extends StatelessWidget {
   }
 }
 
-class ConversationScreen extends StatelessWidget {
+class ConversationScreen extends ConsumerWidget {
   const ConversationScreen({super.key, required this.id});
 
   final String id;
 
   @override
-  Widget build(BuildContext context) {
-    final f = StoreScope.of(context).fixtures;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(fixturesProvider);
     final scheme = Theme.of(context).colorScheme;
     final msgs = f.messages.where((m) => m.conversationId == id).toList()
       ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
@@ -72,12 +73,9 @@ class ConversationScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!mine)
-                    GestureDetector(
-                      onTap: () => context.push('/users/${m.authorId}'),
-                      child: Text(f.users.firstWhere((u) => u.id == m.authorId).name,
-                          style: Theme.of(context).textTheme.labelSmall),
-                    ),
-                    Text(m.text),
+                    Text(f.users.firstWhere((u) => u.id == m.authorId).name,
+                        style: Theme.of(context).textTheme.labelSmall),
+                  Text(m.text),
                 ],
               ),
             ),

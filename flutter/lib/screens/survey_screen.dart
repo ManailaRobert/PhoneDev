@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../contract/contract.dart';
-import '../store.dart';
+import '../providers.dart';
 
-class SurveyScreen extends StatefulWidget {
+class SurveyScreen extends ConsumerStatefulWidget {
   const SurveyScreen({super.key, required this.id});
 
   final String id;
 
   @override
-  State<SurveyScreen> createState() => _SurveyScreenState();
+  ConsumerState<SurveyScreen> createState() => _SurveyScreenState();
 }
 
-class _SurveyScreenState extends State<SurveyScreen> {
+class _SurveyScreenState extends ConsumerState<SurveyScreen> {
   final _formKey = GlobalKey<FormState>();
   late final Entrance _entrance;
   late bool _coordsConfirmed, _addressConfirmed, _groundFloorCommercial;
@@ -84,7 +85,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         surveyedAt: _entrance.surveyedAt,
       );
 
-  void _submit() {
+  Future<void> _submit() async {
     final fieldsOk = _formKey.currentState!.validate();
     final candidate = _candidate();
     // validateEntranceSurvey returns "field: message" strings.
@@ -94,8 +95,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
     };
     setState(() => _ruleErrors = rules);
     if (!fieldsOk || rules.isNotEmpty) return;
-    StoreScope.of(context).submitSurvey(candidate);
-    context.pop();
+    await ref.read(databaseProvider).submitSurvey(candidate, ref.read(meProvider));
+    if (mounted) context.pop();
   }
 
   // A text field whose validator is the contract's.
@@ -120,7 +121,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
   @override
   Widget build(BuildContext context) {
     if (_text.isEmpty) {
-      final e = StoreScope.of(context).entrance(widget.id);
+      // The row comes from SQLite a moment after the first build: fill the
+      // form's controllers only once it is here.
+      final found = ref.watch(entranceProvider(widget.id));
+      if (found.isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      final e = found.value;
       if (e == null) return const Scaffold(body: Center(child: Text('No such entrance.')));
       _init(e);
     }
@@ -165,12 +170,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             gap,
             _field('elevators', 'Elevators', _intRule(validateElevators), keyboard: number),
             gap,
-            // Exercise 2 — the contract's rule, then ours on top.
-            _field('yearBuilt', 'Year built', (s) {
-              final contractError = _intRule(validateYearBuilt)(s);
-              if (contractError != null) return contractError;
-              return int.parse(s!.trim()) > DateTime.now().year ? 'Not in the future' : null;
-            }, keyboard: number),
+            _field('yearBuilt', 'Year built', _intRule(validateYearBuilt), keyboard: number),
             SwitchListTile(
               title: const Text('Shops on the ground floor'),
               value: _groundFloorCommercial,

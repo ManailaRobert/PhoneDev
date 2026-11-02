@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../contract/contract.dart';
-import '../store.dart';
+import '../providers.dart';
 import 'status_chip.dart';
 
 // OpenStreetMap's public tiles, weeks 2–4. Week 5 swaps this one constant for
@@ -12,19 +13,12 @@ import 'status_chip.dart';
 const tiles = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const bucharest = LatLng(44.4355, 26.1025);
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
-}
-
-class _MapScreenState extends State<MapScreen> {
-  String? _selected; // Exercise 4: the first tap selects, the second opens
-
-  @override
-  Widget build(BuildContext context) {
-    final entrances = StoreScope.of(context).entrances;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entrances = ref.watch(entrancesProvider).value ?? const <Entrance>[];
     final done =
         entrances.where((e) => e.surveyStatus != SurveyStatus.notStarted).length;
     return Stack(
@@ -49,24 +43,9 @@ class _MapScreenState extends State<MapScreen> {
                       button: true,
                       label: '${e.street} ${e.number}, ${e.entranceName}',
                       child: GestureDetector(
-                        onTap: () => _selected == e.id
-                            ? context.push('/entrances/${e.id}')
-                            : setState(() => _selected = e.id),
-                        // Exercise 4 — an implicit animation: change the size,
-                        // AnimatedContainer tweens to it.
-                        child: Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeOut,
-                            width: _selected == e.id ? 34 : 22,
-                            height: _selected == e.id ? 34 : 22,
-                            decoration: BoxDecoration(
-                              color: statusColor[e.surveyStatus],
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
-                            ),
-                          ),
-                        ),
+                        onTap: () => context.push('/entrances/${e.id}'),
+                        child: Icon(Icons.location_on,
+                            size: 40, color: statusColor[e.surveyStatus]),
                       ),
                     ),
                   ),

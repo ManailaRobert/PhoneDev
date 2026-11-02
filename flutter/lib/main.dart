@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'db/database.dart';
+import 'providers.dart';
 
 import 'screens/entrance_screen.dart';
 import 'screens/inbox_screen.dart';
@@ -7,22 +11,27 @@ import 'screens/map_screen.dart';
 import 'screens/route_screen.dart';
 import 'screens/survey_screen.dart';
 import 'store.dart';
-import 'screens/user_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final store = FieldStore(await Fixtures.load());
-  runApp(StoreScope(store: store, child: const FieldApp()));
+  final fixtures = await Fixtures.load();
+  // The app's truth from now on: SQLite, seeded from the fixtures once.
+  final db = AppDatabase();
+  await db.seedIfEmpty(fixtures.buildings, fixtures.entrances);
+  runApp(ProviderScope(
+    // Hand the two things main() opened to every provider that asks for them.
+    overrides: [
+      fixturesProvider.overrideWithValue(fixtures),
+      databaseProvider.overrideWithValue(db),
+    ],
+    child: const FieldApp(),
+  ));
 }
 
 final _router = GoRouter(
   initialLocation: '/map',
   routes: [
     // The three tabs: each branch keeps its own navigation stack.
-    GoRoute(
-      path: '/users/:id',
-      builder: (context, state) => UserScreen(id: state.pathParameters['id']!),
-    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => TabsShell(shell: shell),
       branches: [
@@ -60,7 +69,6 @@ final _router = GoRouter(
         ),
       ],
     ),
-
   ],
 );
 
@@ -80,15 +88,14 @@ class FieldApp extends StatelessWidget {
   }
 }
 
-class TabsShell extends StatelessWidget {
+class TabsShell extends ConsumerWidget {
   const TabsShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
   @override
-  Widget build(BuildContext context) {
-    final store = StoreScope.of(context);
-    final f = store.fixtures;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(fixturesProvider);
     final unread = f.messages
         .where((m) => m.authorId != f.me && !m.readAt.containsKey(f.me))
         .where((m) => f.conversations
