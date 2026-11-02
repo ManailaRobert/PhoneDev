@@ -9,6 +9,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../contract/contract.dart';
 import '../providers.dart';
 import 'status_chip.dart';
+import 'sync_bar.dart';
 
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:uuid/uuid.dart';
@@ -109,6 +110,7 @@ class MapScreen extends ConsumerWidget {
                         child: const Text('Sign out'),
                       ),
                     ]),
+                    const SyncBar(),
                   ]),
                 ),
               ),
