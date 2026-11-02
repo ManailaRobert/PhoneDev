@@ -18,6 +18,11 @@ migrate_working_dir/
 *.iws
 .idea/
 
++# Your Firebase project's config (step 3): written by flutterfire configure, never committed
+/lib/firebase_options.dart
+/android/app/google-services.json
+/firebase.json
+
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.

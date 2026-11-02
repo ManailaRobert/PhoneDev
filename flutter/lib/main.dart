@@ -1,9 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'db/database.dart';
+import 'firebase_options.dart';
 import 'providers.dart';
+import 'session.dart';
 
 import 'screens/entrance_screen.dart';
 import 'screens/inbox_screen.dart';
@@ -11,7 +14,7 @@ import 'screens/map_screen.dart';
 import 'screens/route_screen.dart';
 import 'screens/survey_screen.dart';
 import 'store.dart';
-import 'session.dart';
+
 
 const _tabs = ['/map', '/route', '/inbox'];
 var _startAt = _tabs.first;
@@ -19,6 +22,7 @@ var _startAt = _tabs.first;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final fixtures = await Fixtures.load();
   // The app's truth from now on: SQLite, seeded from the fixtures once.
   final db = AppDatabase();
