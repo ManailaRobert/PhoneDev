@@ -1,59 +1,87 @@
+import {
+  Camera,
+  Map as MapLibreMap,
+  Marker,
+  type StyleSpecification,
+  TransformRequestManager,
+} from '@maplibre/maplibre-react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useEntrances } from '../store';
-import { statusColor, useColors } from '../theme';
-import { Pin } from './Pin';
-import { StatusChip } from './StatusChip';
+import { statusColor, statusLabel } from '../theme';
 
-// react-native-maps has no web implementation. Metro picks this file instead
-// of EntranceMap.tsx when it bundles for the web: the same pins, as a list.
+// OpenStreetMap's public tiles, weeks 2–4. Week 5 swaps this one constant for
+// the course's own Bucharest tiles.
+const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+// The OSM tile policy asks for a User-Agent that names the app. MapLibre can
+// set request headers (react-native-maps' UrlTile could not).
+TransformRequestManager.addHeader({
+  id: 'osm-user-agent',
+  name: 'User-Agent',
+  value: 'FieldApp/1.0 (ro.rau.field_app; Mobile Devices Programming, RAU)',
+  match: 'tile\\.openstreetmap\\.org',
+});
+
+// A MapLibre style (style spec v8): one raster source, one raster layer. No
+// Google, no Apple, no key: the same map on every Android and iOS device.
+const OSM_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: [TILES],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+};
+
+const BUCHAREST: [number, number] = [26.1025, 44.4355]; // [lng, lat]: MapLibre's order
+
 export function EntranceMap() {
   const entrances = useEntrances();
-  const colors = useColors();
-  const [selected, setSelected] = useState<string | null>(null);
   return (
-    <FlatList
-      data={entrances}
-      keyExtractor={(e) => e.id}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <Text style={[styles.note, { color: colors.muted }]}>
-          The map is native only — on the web, the pins are a list.
-        </Text>
-      }
-      renderItem={({ item: e }) => (
-        <Pressable
-          accessibilityRole="button"
-          // first press selects (the pin grows), the second opens
-          onPress={() =>
-            selected === e.id ? router.push(`/entrances/${e.id}`) : setSelected(e.id)
-          }
-          style={[styles.row, { borderColor: colors.border }]}
-        >
-          <Pin color={statusColor[e.surveyStatus]} selected={selected === e.id} />
-          <Text style={[styles.title, { color: colors.text }]}>
-            {e.street} {e.number}, {e.entranceName}
-          </Text>
-          <StatusChip status={e.surveyStatus} />
-        </Pressable>
-      )}
-    />
+    <>
+      <MapLibreMap style={StyleSheet.absoluteFill} mapStyle={OSM_STYLE}>
+        <Camera initialViewState={{ center: BUCHAREST, zoom: 13 }} />
+        {entrances.map((e) => (
+          <Marker
+            key={e.id}
+            id={e.id}
+            lngLat={[e.correctedLng ?? e.lng, e.correctedLat ?? e.lat]}
+            anchor="center"
+            // The marker takes the press: a Pressable inside it gets no touches on Android.
+            onPress={() => router.push(`/entrances/${e.id}`)}
+          >
+            <View
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={`${e.street} ${e.number}, ${e.entranceName}, ${statusLabel[e.surveyStatus]}`}
+              style={styles.hit}
+            >
+              <View style={[styles.pin, { backgroundColor: statusColor[e.surveyStatus] }]} />
+            </View>
+          </Marker>
+        ))}
+      </MapLibreMap>
+      <Text style={styles.attribution}>© OpenStreetMap contributors</Text>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 16, paddingTop: 72, gap: 8 },
-  note: { marginBottom: 8 },
-  row: {
-    minHeight: 48,
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+  hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  pin: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: '#ffffff' },
+  attribution: {
+    position: 'absolute',
+    right: 4,
+    bottom: 4,
+    fontSize: 11,
+    paddingHorizontal: 4,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    color: '#111827',
   },
-  title: { flex: 1, fontSize: 16 },
 });

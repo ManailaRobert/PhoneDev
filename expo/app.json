@@ -22,12 +22,12 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.fieldappexpo"
+      "package": "ro.rau.field_app"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "expo-sqlite",
+      "expo-sqlite",      
       "expo-secure-store",
       [
         "expo-image-picker",
