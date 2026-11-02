@@ -17,6 +17,7 @@ import 'screens/route_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/survey_screen.dart';
 import 'store.dart';
+import 'sync.dart';
 
 
 const _tabs = ['/map', '/route', '/inbox'];
@@ -27,9 +28,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final fixtures = await Fixtures.load();
-  // The app's truth from now on: SQLite, seeded from the fixtures once.
+  // The app's truth: SQLite. The buildings come from the fixtures once; the
+  // entrances, from the cloud (sync.dart).
   final db = AppDatabase();
-  await db.seedIfEmpty(fixtures.buildings, fixtures.entrances);
+  await db.seedIfEmpty(fixtures.buildings);
   _startAt = await lastTab(); // reopen on the tab the app was closed on
   runApp(ProviderScope(
     // Hand the two things main() opened to every provider that asks for them.
@@ -105,12 +107,15 @@ class FieldApp extends ConsumerWidget {
             : const SignInScreen(),
       );
     }
-    return MaterialApp.router(
-      title: 'Field app',
-      routerConfig: _router,
-      theme: _light,
-      darkTheme: _dark,
-      themeMode: ThemeMode.system, // follow the phone's setting
+    // The sync runs while a worker is signed in (SyncScope, sync.dart).
+    return SyncScope(
+      child: MaterialApp.router(
+        title: 'Field app',
+        routerConfig: _router,
+        theme: _light,
+        darkTheme: _dark,
+        themeMode: ThemeMode.system, // follow the phone's setting     
+    ),
     );
   }
 }
