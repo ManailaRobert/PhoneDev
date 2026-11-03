@@ -28,6 +28,11 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Your Firebase project's config (step 3): written by flutterfire configure, never committed
+/lib/firebase_options.dart
+/android/app/google-services.json
+/firebase.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
